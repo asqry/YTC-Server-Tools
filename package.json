@@ -1,0 +1,26 @@
+{
+  "name": "ytcservertools",
+  "version": "1.0.0",
+  "description": "A system to manage verified servers on YTC.",
+  "main": "src/client/index.js",
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1",
+    "dev": "nodemon ."
+  },
+  "repository": {
+    "type": "git",
+    "url": "git+https://github.com/seekeroftacos/YTC-Server-Tools.git"
+  },
+  "keywords": [],
+  "author": "",
+  "license": "ISC",
+  "bugs": {
+    "url": "https://github.com/seekeroftacos/YTC-Server-Tools/issues"
+  },
+  "homepage": "https://github.com/seekeroftacos/YTC-Server-Tools#readme",
+  "dependencies": {
+    "discord.js": "^12.5.1",
+    "dotenv": "^8.2.0",
+    "moment": "^2.29.1"
+  }
+}
