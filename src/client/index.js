@@ -16,13 +16,30 @@ const {
   guildMemberAdd,
   guildCreate,
 } = require('../listeners');
-const serverCheck = require('../functions/serverCheck');
+const { connect: mongoConnect } = require('../functions/mongoConnect');
+const runAdvertOption = require('../functions/runAdvertOption');
+const Guilds = require('../../models/Guild');
 
 //Events
 client.on('ready', () => {
   client.user.setActivity('Invite me to advertise your server on YTC!', {
     type: 'WATCHING',
   });
+  mongoConnect();
+
+  client.guilds.cache.forEach(async (guild) => {
+    let g = await Guilds.findOne({ id: guild.id });
+    if (!g) return;
+    let bumpChannel = guild.channels.cache.get(g.bumpChannel);
+    let m = await bumpChannel.messages.fetch(g.optionsMessage);
+    if (!m || m == null || m == undefined)
+      runAdvertOption(client, bumpChannel, guild, g);
+    else {
+      m.delete();
+      runAdvertOption(client, bumpChannel, guild, g);
+    }
+  });
+
   console.log(`Ready at`, client.user.tag);
 });
 
@@ -30,8 +47,6 @@ client.on('message', async (message) => {
   if (message.author.bot || !message.guild) return;
   if (message.content === '>test') {
     client.emit('guildCreate', message.guild);
-    //const result = await serverCheck(message.guild);
-    //console.log(result);
   }
   msg(client, message);
 });
