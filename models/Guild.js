@@ -6,12 +6,14 @@ const data = new Schema({
   bumpChannel: String,
   ownerId: String,
   updatesChannel: String,
+  ytcCategory: String,
   nextBump: Number,
   optionsMessage: String,
   description: String,
   bumps: Number,
   color: String,
   invite: String,
+  blacklisted: Boolean,
 });
 
 module.exports = new model('guild', data);

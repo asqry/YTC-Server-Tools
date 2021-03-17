@@ -7,7 +7,7 @@ const { Client } = require('discord.js');
 require('dotenv/config');
 
 //Global Vars
-var client = new Client({ partials: ['REACTION', 'MESSAGE'] });
+var client = new Client({ partials: ['REACTION', 'MESSAGE', 'CHANNEL'] });
 
 //Imports
 const {
@@ -19,6 +19,7 @@ const {
 const { connect: mongoConnect } = require('../functions/mongoConnect');
 const runAdvertOption = require('../functions/runAdvertOption');
 const Guilds = require('../../models/Guild');
+const guildDelete = require('../listeners/guildDelete');
 
 //Events
 client.on('ready', () => {
@@ -45,9 +46,6 @@ client.on('ready', () => {
 
 client.on('message', async (message) => {
   if (message.author.bot || !message.guild) return;
-  if (message.content === '>test') {
-    client.emit('guildCreate', message.guild);
-  }
   msg(client, message);
 });
 
@@ -62,6 +60,10 @@ client.on('guildMemberAdd', async (member) => {
 
 client.on('guildCreate', async (guild) => {
   guildCreate(client, guild);
+});
+
+client.on('guildDelete', async (guild) => {
+  guildDelete(client, guild);
 });
 
 //Connect to Discord

@@ -3,4 +3,5 @@ module.exports = {
   messageReactionAdd: require('./messageReactionAdd'),
   guildMemberAdd: require('./guildMemberAdd'),
   guildCreate: require('./guildCreate'),
+  guildDelete: require('./guildDelete'),
 };

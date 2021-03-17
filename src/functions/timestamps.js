@@ -2,7 +2,7 @@ const moment = require('moment');
 
 module.exports = {
   checkUnixTimestamp: async (currentUnixTimestamp, futureUnixTimestamp) => {
-    if (currentUnixTimestamp < futureUnixTimestamp) {
+    if (currentUnixTimestamp > futureUnixTimestamp) {
       return true;
     } else {
       return false;

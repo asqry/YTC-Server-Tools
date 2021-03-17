@@ -10,6 +10,17 @@ const Guilds = require('../../models/Guild');
 const runAdvertOption = require('../functions/runAdvertOption');
 
 module.exports = async (client, guild) => {
+  // if (guildEntry.blacklisted === true) {
+  //   guild.owner
+  //     .send(
+  //       `${user} -> \`${guild.name}\` is blacklisted. Please contact an admin with your server ID if you think this is a mistake.`
+  //     )
+  //     .then((msg) => msg.delete({ timeout: 5000 }));
+
+  //   guild.leave();
+  //   return;
+  // }
+
   let consentEmbed = new MessageEmbed()
     .setTitle('YTC Server Utilities')
     .setColor(0x385da1)
@@ -118,6 +129,7 @@ module.exports = async (client, guild) => {
                         `Automated Check Scores`,
                         `Safety Checks: **${result.safetyPoints}/4**\nGeneral Checks: **${result.normalPoints}/3**`
                       )
+                      .addField('Owner', `${guild.owner}`)
                       .setFooter(`✅ = Approve | ❌ = Deny`);
 
                     let approvalChannel = client.channels.cache.get(
@@ -132,13 +144,38 @@ module.exports = async (client, guild) => {
                           const collector = await m.createReactionCollector(
                             (reaction, user) =>
                               reaction.emoji.name === '✅' ||
-                              ('❌' && !user.bot),
-                            { max: 2 }
+                              ('❌' && !user.bot)
                           );
 
                           collector.on('collect', (reaction, user) => {
+                            let member = reaction.message.guild.members.cache.get(
+                              user.id
+                            );
+
+                            if (!member.roles.cache.has(config.approval)) {
+                              reaction.message.reactions
+                                .resolve(reaction.emoji.name)
+                                .users.remove(user.id);
+
+                              user.send(
+                                `${user} ->` +
+                                  ' You are not a member of the approval team. Contact Asqry if this is a mistake.'
+                              );
+
+                              return;
+                            }
+
                             collector.stop();
+
+                            let reactedBy = user.tag;
+
                             if (reaction.emoji.name === '✅') {
+                              reaction.message.reactions.removeAll();
+                              m.embeds[0].setDescription(
+                                `The server \`${guild.name}\` has been approved by ${reactedBy}!`
+                              );
+                              m.embeds[0].setColor(`#57f542`);
+                              m.edit(m.embeds[0]);
                               let user = client.users.cache.get(guild.owner.id);
                               let approvalEmbed = new MessageEmbed()
                                 .setTitle(
@@ -148,7 +185,7 @@ module.exports = async (client, guild) => {
                                   `The bot will automatically create:\n\n> A private category called "YTC"\n> A private channel called "ytc-tools"\n> A private channel called "ytc-updates"\n\nThose channels will be important to your time using YTC Server Tools, please do not delete them.`
                                 )
                                 .setFooter(
-                                  "You may change the channels' permissions to allow access to your staff team or other server members."
+                                  "You may change the channels' permissions to allow access to your staff team or other server members. ANYONE WITH ACCESS TO THESE CHANNELS WILL BE ABLE TO CHANGE YOUR SETTINGS."
                                 );
 
                               user.send(approvalEmbed).then(async () => {
@@ -230,21 +267,19 @@ module.exports = async (client, guild) => {
                                                 updatesChannel:
                                                   updatesChannel.id,
                                                 color: '#5486e4',
-                                                nextBump: moment(
-                                                  new Date()
-                                                ).format('x'),
+                                                nextBump: 0,
                                                 optionsMessage: null,
                                                 description: `We don't know much about ${guild.name}, but we're sure they're great.`,
                                                 bumps: 0,
                                                 invite: null,
+                                                blacklisted: false,
                                               });
 
                                               newGuild.save().then((d) => {
                                                 runAdvertOption(
                                                   client,
                                                   bumpChannel,
-                                                  guild,
-                                                  d
+                                                  guild
                                                 );
                                                 guild.owner
                                                   .send(
@@ -290,7 +325,7 @@ module.exports = async (client, guild) => {
                               let user = client.users.cache.get(guild.owner.id);
                               let denialEmbed = new MessageEmbed()
                                 .setTitle(
-                                  `Your server: \`${guild.name}\` was denied by ${user.tag}.`
+                                  `Your server: \`${guild.name}\` was denied by ${reactedBy}.`
                                 )
                                 .setDescription(
                                   `Please make sure that your server...\n\n> Follows the Discord TOS\n> Is clean and safe for all users\n> Has moderation settings of \`MEDIUM\` or higher\n> Has less than 2 marked NSFW channels\n\nIf you have any questions, please DM an Admin or higher on YTC.\n\nOnce these are met, you may re-apply by adding the bot back to your server: \`${guild.name}\``
@@ -305,6 +340,12 @@ module.exports = async (client, guild) => {
                 });
               }, 1000);
             } else {
+              reaction.message.reactions.removeAll();
+              m.embeds[0].setDescription(
+                `The server \`${guild.name}\` has been denied by ${reactedBy}.`
+              );
+              m.embeds[0].setColor(`#f54242`);
+              m.edit(m.embeds[0]);
               guild.leave();
               reaction.message.channel
                 .send(
@@ -315,7 +356,7 @@ module.exports = async (client, guild) => {
                 .then((m) => m.delete({ timeout: 10000 }));
               reaction.message.delete({ timeout: 10000 });
             }
-            // reaction.message.channel.send('hi there ' + user.tag);
+            // reaction.message.channel.send('hi there ' + reactedBy);
           });
         });
     })

@@ -1,10 +1,13 @@
 const { MessageEmbed } = require('discord.js');
 const moment = require('moment');
+let Guilds = require('../../models/Guild');
 let { ytcBumpChannel } = require('../../config');
 
 let { checkUnixTimestamp, getNextBump } = require('.././functions/timestamps');
 
-module.exports = async (client, channel, guild, guildEntry) => {
+module.exports = async (client, channel, guild) => {
+  let guildEntry = await Guilds.findOne({ id: guild.id });
+  if (!guildEntry) return console.log('ERROR FINDING GUILD :(');
   let invite = await guild.channels.cache
     .filter((c) => c.type === 'text')
     .first()
@@ -144,7 +147,7 @@ module.exports = async (client, channel, guild, guildEntry) => {
     } else if (reaction.emoji.name === validEmoteList[2]) {
       // 🎨
       let msg = await reaction.message.channel.send(
-        `${user} -> What would you the new color of your ad to be? (HEX FORMAT) (Respond within 60 seconds)`
+        `${user} -> What would you the new color of your ad to be? (HEX FORMAT https://www.google.com/search?q=color+picker) (Respond within 60 seconds)`
       );
       msg.channel
         .awaitMessages(
@@ -187,7 +190,11 @@ module.exports = async (client, channel, guild, guildEntry) => {
             });
         });
     } else if (reaction.emoji.name === validEmoteList[1]) {
+      // 🔼
       let bumpChannel = client.channels.cache.get(ytcBumpChannel);
+
+      let guildEntry2 = await Guilds.findOne({ id: guild.id });
+      if (!guildEntry2) return console.log('ERROR FINDING GUILD :(');
 
       let ad = new MessageEmbed()
         .setTitle(guild.name)
@@ -217,43 +224,44 @@ module.exports = async (client, channel, guild, guildEntry) => {
         )
         .addField(
           `Join "${guild.name}"`,
-          `Click [here](${guildEntry.invite}) to join`
+          `Click [here](${guildEntry2.invite}) to join`
         )
-        .setURL(guildEntry.invite);
+        .setURL(guildEntry2.invite);
 
       //implement shit to stop them if they have already bumped
 
-      console.log('DATE', moment(new Date()).format('x'));
-      console.log('FUTURE', guildEntry.nextBump);
-      console.log(
-        'DATE < FUTURE',
-        moment(new Date()).format('x') < guildEntry.nextBump
-      );
+      console.log('DATE', Date.now());
+      console.log('FUTURE', guildEntry2.nextBump);
+      console.log('DATE < FUTURE', Date.now() < guildEntry2.nextBump);
       console.log(
         'FUNCTION',
-        await checkUnixTimestamp(
-          moment(new Date()).format('x'),
-          guildEntry.nextBump
-        )
+        await checkUnixTimestamp(Date.now(), guildEntry2.nextBump)
       );
 
-      if (
-        !(await checkUnixTimestamp(
-          moment(new Date()).format('x'),
-          guildEntry.nextBump
-        ))
-      ) {
+      if (guildEntry2.blacklisted === true) {
         reaction.message.channel
           .send(
-            `${user} -> You already bumped within the last 2 hours. Please try again later`
+            `${user} -> This guild (\`${guild.name}\`) is blacklisted from bumping. Please contact an admin with your support ID if you think this is a mistake.`
           )
           .then((msg) => msg.delete({ timeout: 5000 }));
+
+        return;
+      }
+
+      if (!(await checkUnixTimestamp(Date.now(), guildEntry2.nextBump))) {
+        reaction.message.channel
+          .send(
+            `${user} -> You already bumped within the last 2 hours. Please try again ${moment(
+              guildEntry2.nextBump
+            ).fromNow()}.`
+          )
+          .then((msg) => msg.delete({ timeout: 5000 }));
+        return;
       } else {
         bumpChannel.send(ad);
       }
-
-      guildEntry.nextBump = await getNextBump();
-      guildEntry.save();
+      guildEntry2.nextBump = await getNextBump();
+      guildEntry2.save();
 
       //implement shit to stop them if they have already bumped
     }
