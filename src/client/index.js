@@ -67,4 +67,4 @@ client.on('guildDelete', async (guild) => {
 });
 
 //Connect to Discord
-client.login(client.token);
+client.login(process.env.DISCORD_TOKEN);
