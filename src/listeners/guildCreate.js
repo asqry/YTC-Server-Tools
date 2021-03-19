@@ -165,6 +165,10 @@ module.exports = async (client, guild) => {
                               return;
                             }
 
+                            reaction.message.reactions
+                              .resolve(reaction.emoji.name)
+                              .users.remove(user.id);
+
                             collector.stop();
 
                             let reactedBy = user.tag;
@@ -340,7 +344,6 @@ module.exports = async (client, guild) => {
                 });
               }, 1000);
             } else {
-              reaction.message.reactions.removeAll();
               m.embeds[0].setDescription(
                 `The server \`${guild.name}\` has been denied by ${reactedBy}.`
               );
