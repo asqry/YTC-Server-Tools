@@ -165,9 +165,7 @@ module.exports = async (client, guild) => {
                               return;
                             }
 
-                            reaction.message.reactions
-                              .resolve(reaction.emoji.name)
-                              .users.remove(user.id);
+                            reaction.message.reactions.removeAll();
 
                             collector.stop();
 
