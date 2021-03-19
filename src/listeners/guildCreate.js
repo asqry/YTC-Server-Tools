@@ -325,6 +325,11 @@ module.exports = async (client, guild) => {
                               });
                             } else {
                               let user = client.users.cache.get(guild.owner.id);
+                              m.embeds[0].setDescription(
+                                `The server \`${guild.name}\` has been denied by ${reactedBy}.`
+                              );
+                              m.embeds[0].setColor(`#f54242`);
+                              m.edit(m.embeds[0]);
                               let denialEmbed = new MessageEmbed()
                                 .setTitle(
                                   `Your server: \`${guild.name}\` was denied by ${reactedBy}.`
@@ -342,11 +347,6 @@ module.exports = async (client, guild) => {
                 });
               }, 1000);
             } else {
-              m.embeds[0].setDescription(
-                `The server \`${guild.name}\` has been denied by ${reactedBy}.`
-              );
-              m.embeds[0].setColor(`#f54242`);
-              m.edit(m.embeds[0]);
               guild.leave();
               reaction.message.channel
                 .send(
